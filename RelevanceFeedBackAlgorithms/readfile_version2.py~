@@ -1,0 +1,152 @@
+from __future__ import division
+import string
+import operator
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+
+#######	
+def construct_index(Words):
+	set_words = []
+	for word in Words:
+		if word not in set_words:
+			set_words.append(word)
+
+	#print set_words, len(set_words)
+	
+	dict_words = {}
+	for word in set_words:
+		indices = [n for (n, e) in enumerate(Words) if e == word] #get word position
+		dict_words[word] = indices
+	#print dict_words
+	return dict_words
+
+
+def construct_main_index(dict_words,main_index,ctr):
+	for word in dict_words:
+		if word not in main_index:
+			main_index[word] = {}
+			
+		main_index[word][ctr]=dict_words[word]
+	#print main_index
+	main_index = collections.OrderedDict(sorted(main_index.items()))
+#######
+
+irrelevant_docs = []
+relevant_docs = []
+
+#file read, store docs in list
+
+tokenize = lambda doc: doc.lower().split(" ")
+
+LabelDocs = []
+def file_read(filename,doc_list):
+	document = []
+	with open(filename) as f:
+    		document = f.read()
+		document = unicode(document,errors='ignore')
+	MainDocuments_List.append(document)
+
+def read_S08():
+	for i in range(1,5):
+		for j in range(1,11):
+			string = "S08/data/set" + str(i) + "/a" + str(j) + ".txt.clean"
+			string1 = "S08-" + str(i) + "-a" + str(j)
+			LabelDocs.append(string1)
+			file_read(string,MainDocuments_List)
+
+def read_S09():
+	for i in range(1,6):
+		for j in range(1,11):
+			string = "S09/data/set" + str(i) + "/a" + str(j) + ".txt.clean"
+			string1 = "S09-" + str(i) + "-a" + str(j)
+			LabelDocs.append(string1)
+			file_read(string,MainDocuments_List)
+
+
+def read_S10():
+	for i in range(1,7):
+		for j in range(1,11):
+			string = "S10/data/set" + str(i) + "/a" + str(j) + ".txt.clean"
+			string1 = "S10-" + str(i) + "-a" + str(j)
+			LabelDocs.append(string1)
+			file_read(string,MainDocuments_List)
+
+def rel_irrel_check(list_index):
+	relevant_doc_index = []
+	non_relevant_doc_index  = []
+	print ("enter relevant documents index")
+	input_doc_index = map(int,raw_input().split())
+	relevant_doc_index = list({index for index in input_doc_index if index not in relevant_doc_index})
+	non_relevant_doc_index = list({index for index in list_index if index not in relevant_doc_index})
+	#sprint relevant_doc_index
+	#print non_relevant_doc_index
+	return relevant_doc_index,non_relevant_doc_index
+
+def find_centroid(doc_index,tfidf_rep):
+	#print tfidf_rep[doc_index,:].shape
+	return (tfidf_rep[doc_index,:].sum(axis=0)/len(doc_index))
+	
+
+def rocchio_apply(relevant_doc_index,irrelevant_doc_index,tfidf_rep,Q):
+	alpha = 1
+	beta = 0.75
+	gamma = 0.15
+
+	centroid_vec_relevant = find_centroid(relevant_doc_index,tfidf_rep)
+	centroid_vec_irrelevant = find_centroid(irrelevant_doc_index,tfidf_rep)
+	
+	Qm = alpha*Q + beta*(centroid_vec_relevant) - gamma*(centroid_vec_irrelevant)
+	return Qm
+
+def tf_matrix(MainDocuments_List):
+	term_document_matrix = CountVectorizer(tokenizer=tokenize)
+	term_doc_representation = term_document_matrix.fit_transform(MainDocuments_List)
+	return term_doc_representation
+if __name__ == "__main__":
+	flag = 1
+	#index, value = max(enumerate(cos_sim), key=operator.itemgetter(1))
+	#print doc_list[index]
+
+	MainDocuments_List=[]
+	read_S08()
+	read_S09()
+	read_S10()
+
+	term_doc_rep = tf_matrix(MainDocuments_List) #term document matrix
+	#print term_doc_rep	
+
+	tfidf_matrix= TfidfVectorizer(norm='l2',min_df=0, use_idf=True, smooth_idf=False, sublinear_tf=True, tokenizer=tokenize)
+	tfidf_rep = tfidf_matrix.fit_transform(MainDocuments_List)
+
+	QueryString = "give an example of the many sukarno era monuments in the city"
+	query_response = tfidf_matrix.transform([QueryString])
+	while(flag==1):
+		cos_sim = cosine_similarity(query_response, tfidf_rep)
+		cos_sim = max(cos_sim)
+		list_index=sorted(range(len(cos_sim)), key=lambda i: cos_sim[i])[-20:]
+
+		list_index.reverse()
+		for i in list_index:
+			print("Doc name, cosine sim, index",LabelDocs[i],cos_sim[i],i)
+			
+		
+	
+		relevant_doc_index,irrelevant_doc_index = rel_irrel_check(list_index) #rel docs index input user
+		
+		print relevant_doc_index,irrelevant_doc_index	
+	
+		Qm = rocchio_apply(relevant_doc_index,irrelevant_doc_index,tfidf_rep,query_response)
+		query_response=Qm
+
+	
+
+
+
+
+
+	
+	
+	
+	
+

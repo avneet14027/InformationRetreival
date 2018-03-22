@@ -1,0 +1,11 @@
+Implementation of Pseudo Relevance Feedback using Rocchio Algorith and BM-25 algorithm
+
+-(Refer slides 9 and 10 in attached PDF).
+There is a corpus.txt that has the following format
+Each document id begins with a #. The next and the following lines are the document contents that are already stemmed.
+You need to build a search engine assuming that no relevance information is available
+1. Take the corpus, build an inverted index (only index strings and alphanumeric token)
+2. Compute tf-idf score for each query mentioned below
+3. Compute BM25 score for each query mentioned below
+4. Assume k=1 and b=0.5.
+5. Prepare a table with the top 10 documents in the sorted order in the following format

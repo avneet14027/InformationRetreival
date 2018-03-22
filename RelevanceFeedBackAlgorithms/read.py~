@@ -1,0 +1,22 @@
+import itertools as it
+
+HashedDocuments_List = []
+HashIndex_DocName = []
+def file_read_from_corpus(filename):
+	name = 1
+	with open(filename,'r') as f:
+		for key,group in it.groupby(f,lambda line: line.startswith('#')):
+        		if not key:
+            			group = list(group)
+            			string = ""
+				for line in group:
+					line = line.rstrip('\n')
+					string = string + line
+				HashedDocuments_List.append(string)
+				HashIndex_DocName.append(('doc_'+str(name)))
+				name+=1
+
+if __name__ == "__main__":
+	file_read_from_corpus('corpus.txt')
+	print len(HashedDocuments_List)
+	print HashIndex_DocName
